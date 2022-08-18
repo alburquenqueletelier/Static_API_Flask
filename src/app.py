@@ -30,13 +30,48 @@ def handle_hello():
 
     # this is how you can use the Family datastructure by calling its methods
     members = jackson_family.get_all_members()
-    response_body = {
-        "hello": "world",
-        "family": members
-    }
+    return jsonify(members), 200
 
+@app.route('/member/<int:id>', methods=['GET', 'DELETE'])
+def member_action(id):
 
-    return jsonify(response_body), 200
+    member = jackson_family.get_member(id)
+    if member:
+        if request.method == 'GET':
+            # del member[0]["last_name"]
+            return jsonify(member[0]), 200
+        elif request.method == 'DELETE':
+            jackson_family.delete_member(id)
+            return jsonify({
+                "done": True
+            })
+        else:
+            return jsonify({
+                "Error": "Metodo no permitido"
+            }), 400
+    else:
+        return jsonify({
+            "message": f"No existe user con el id={id}"
+        }), 404
+
+@app.route('/member', methods=['POST'])
+def add_new_member():
+
+    member = request.get_json()
+    if len(member["first_name"])>0 and member["age"]>=0 and len(member["lucky_numbers"]) > 0:
+        jackson_family.add_member({
+            "id": member["id"] if "id" in member else None,
+            "first_name": member["first_name"],
+            "age": member["age"],
+            "lucky_numbers": member["lucky_numbers"]
+        })
+        return jsonify({
+            "message": "Nuevo miembro creado exitosamente"
+        }), 200
+    else:
+        return jsonify({
+            "message": "No se pudo crear el usuario"
+        }), 400
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
